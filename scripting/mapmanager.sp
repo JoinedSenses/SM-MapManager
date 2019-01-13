@@ -29,6 +29,8 @@ public Plugin myinfo = {
 	url = "http://github.com/JoinedSenses"
 }
 
+// ----------------- SM API
+
 public void OnPluginStart() {
 	CreateConVar("sm_mapmanager_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
 
@@ -57,6 +59,8 @@ public void OnMapEnd() {
 		UpdateMapFiles();		
 	}
 }
+
+// ----------------- Commands
 
 public Action cmdAddMap(int client, int args) {
 	if (!args) {
@@ -105,6 +109,8 @@ public Action cmdMapManager(int client, int args) {
 	DisplayMainMenu(client);
 	return Plugin_Handled;
 }
+
+// ----------------- Menus
 
 void DisplayMainMenu(int client) {
 	Menu menu = new Menu(menuHandler_Main, MENU_ACTIONS_DEFAULT);
@@ -324,6 +330,8 @@ int menuHandler_DeleteConfirmation(Menu menu, MenuAction action, int param1, int
 		}
 	}
 }
+
+// ----------------- Internal Functions/Stocks
 
 bool CheckMapCycle(bool late = false) {
 	File file = OpenFile("cfg/mapcycle.txt", "r");
