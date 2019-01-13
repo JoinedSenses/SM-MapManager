@@ -11,7 +11,7 @@ This plugin works better if you use a custom directory instead of default gamefo
 Considering adding features to support checking against fastdl and the ability to interact with it in some manner  
 
 ## Commands  
-`sm_addmap <mapname>` - Adds a map to mapcycle (Map must exist in map folder)  
-`sm_removemap <mapname>` - Remmoves map from mapcycle  
-`sm_deletemap <mapname>` - Deletes map file from server  
-`sm_mapmanager` - Opens map manager menu  
+`sm_addmap <mapname>` - Adds a map to mapcycle (Map must exist in map folder) \[ADMINFLAG_RCON]  
+`sm_removemap <mapname>` - Remmoves map from mapcycle \[ADMINFLAG_RCON]  
+`sm_deletemap <mapname>` - Deletes map file from server \[ADMFLAG_ROOT]  
+`sm_mapmanager` - Opens map manager menu \[ADMINFLAG_RCON]  
