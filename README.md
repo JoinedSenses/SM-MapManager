@@ -3,6 +3,7 @@ This is probably a super niche plugin that I don't expect anyone else to use
 
 ## Description
 Synchronizes mapcycle/adminmenu_maplist on map end if mapcycle has changed - updates both on plugin start  
+Sorts both files alphabetically  
 Logs errors when maps exist in mapcycle, but not in the map directory specified in the #define  
 Logs changes to addons/sourcemod/logs/mapmanager/
 
