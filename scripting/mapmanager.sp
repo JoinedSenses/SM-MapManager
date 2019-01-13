@@ -42,7 +42,7 @@ public void OnPluginStart() {
 	g_aMapList = new ArrayList(ByteCountToCells(80));
 
 	BuildPath(Path_SM, g_sPath_AMmaplist, sizeof(g_sPath_AMmaplist), "/configs/adminmenu_maplist.ini");
-	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/newmaps/");
+	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/");
 	Format(g_sPath_Custom, sizeof(g_sPath_Custom), MAPFOLDER);
 
 	if (!DirExists(g_sPath_Log)) {
@@ -64,7 +64,7 @@ public void OnMapEnd() {
 
 public Action cmdAddMap(int client, int args) {
 	if (!args) {
-		ReplyToCommand(client, "Useage: sm_addmap <mapname>");
+		ReplyToCommand(client, "Usage: sm_addmap <mapname>");
 		return Plugin_Handled;
 	}
 	
@@ -77,7 +77,7 @@ public Action cmdAddMap(int client, int args) {
 
 public Action cmdRemoveMap(int client, int args) {
 	if (!args) {
-		ReplyToCommand(client, "Useage: sm_removemap <mapname>");
+		ReplyToCommand(client, "Usage: sm_removemap <mapname>");
 		return Plugin_Handled;
 	}
 
@@ -90,7 +90,7 @@ public Action cmdRemoveMap(int client, int args) {
 
 public Action cmdDeleteMap(int client, int args) {
 	if (!args) {
-		ReplyToCommand(client, "Useage: sm_deletemap <mapname>");
+		ReplyToCommand(client, "Usage: sm_deletemap <mapname>");
 		return Plugin_Handled;
 	}
 
@@ -347,7 +347,7 @@ bool CheckMapCycle(bool late = false) {
 			if (late) {
 				char date[32];
 				FormatTime(date, 100, "%Y_%m_%d");
-				BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/log/newmaps/%s", date);
+				BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/log/mapmanager/%s", date);
 				File log = OpenFile(g_sPath_Log, "a");
 				log.WriteLine(buffer);
 				delete log;
@@ -400,7 +400,7 @@ void AddMap(int client, char[] mapname) {
 
 	char date[32];
 	FormatTime(date, 100, "%Y_%m_%d");
-	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/newmaps/%s.log", date);
+	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
 	File log = OpenFile(g_sPath_Log, "a");
 	log.WriteLine("%N ADDED %s", client, buffer);
 	delete log;
@@ -420,7 +420,7 @@ void RemoveMap(int client, char[] mapname) {
 
 	char date[32];
 	FormatTime(date, 100, "%Y_%m_%d");
-	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/newmaps/%s.log", date);
+	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
 	File log = OpenFile(g_sPath_Log, "a");
 	log.WriteLine("%N REMOVED %s", client, mapname);
 	delete log;
@@ -446,7 +446,7 @@ void DeleteMap(int client, char[] mapname) {
 	ReplyToCommand(client, "Deleted %s.bsp", mapname);
 	char date[32];
 	FormatTime(date, 100, "%Y_%m_%d");
-	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/newmaps/%s.log", date);
+	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
 	File log = OpenFile(g_sPath_Log, "a");
 	log.WriteLine("%N DELETED %s", client, mapname);
 	delete log;
