@@ -1,5 +1,6 @@
 # SM-MapManager 
 This is probably a super niche plugin that I don't expect anyone else to use  
+This plugin assumes that your mapcycle.txt and adminmenu_maplist.ini contain the same maps  
 
 ## Description
 Synchronizes mapcycle/adminmenu_maplist on map end if mapcycle has changed - updates both on plugin start  
