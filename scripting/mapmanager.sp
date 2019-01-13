@@ -347,7 +347,7 @@ bool CheckMapCycle(bool late = false) {
 			if (late) {
 				char date[32];
 				FormatTime(date, 100, "%Y_%m_%d");
-				BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/log/mapmanager/%s", date);
+				BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s", date);
 				File log = OpenFile(g_sPath_Log, "a");
 				log.WriteLine(buffer);
 				delete log;
@@ -408,7 +408,7 @@ void AddMap(int client, char[] mapname) {
 
 void RemoveMap(int client, char[] mapname) {
 	int index;
-	if (IsMapInCycle(mapname, index)) {
+	if (!IsMapInCycle(mapname, index)) {
 		ReplyToCommand(client, "Map not in mapcycle");
 		return;
 	}
