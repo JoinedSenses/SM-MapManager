@@ -16,6 +16,7 @@
 #define MAPFOLDER "custom/my_custom_folder/maps"
 
 ArrayList g_aMapList;
+ArrayList g_aTemp;
 
 char g_sPath_Log[PLATFORM_MAX_PATH];
 char g_sPath_AMmaplist[PLATFORM_MAX_PATH];
@@ -40,6 +41,7 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_mapmanager", cmdMapManager, ADMFLAG_RCON);
 
 	g_aMapList = new ArrayList(ByteCountToCells(80));
+	g_aTemp = new ArrayList(ByteCountToCells(80));
 
 	BuildPath(Path_SM, g_sPath_AMmaplist, sizeof(g_sPath_AMmaplist), "/configs/adminmenu_maplist.ini");
 	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/");
@@ -333,31 +335,42 @@ int menuHandler_DeleteConfirmation(Menu menu, MenuAction action, int param1, int
 
 // ----------------- Internal Functions/Stocks
 
-bool CheckMapCycle(bool late = false) {
+bool CheckMapCycle(bool mapend = false) {
 	File file = OpenFile("cfg/mapcycle.txt", "r");
 
 	char buffer[80];
 	bool changed;
+
+	// Check is any maps were added.
 	while (!file.EndOfFile() && file.ReadLine(buffer, sizeof(buffer))) {
 		ReplaceString(buffer, sizeof(buffer), "\n", "", false);
 		if (!IsMapInCycle(buffer)) {
 			g_aMapList.PushString(buffer);
 			changed = true;
 
-			if (late) {
-				char date[32];
-				FormatTime(date, 100, "%Y_%m_%d");
-				BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s", date);
-				File log = OpenFile(g_sPath_Log, "a");
-				log.WriteLine(buffer);
-				delete log;
+			if (mapend) {
+				WriteToLog("Server added %s", buffer);
 			}
 			else if (!IsMapOnServer(buffer)) {
 				LogError("%s in mapcycle, but not on server", buffer);
 			}
 		}
+		g_aTemp.PushString(buffer);
 	}
 	delete file;
+
+	// Check if any maps were removed.
+	for (int i = 0; i < g_aMapList.Length; i++) {
+		g_aMapList.GetString(i, buffer, sizeof(buffer));
+		if (!g_aTemp.FindString(buffer)) {
+			g_aMapList.Erase(i);
+			changed = true;
+
+			if (mapend) {
+				WriteToLog("Server removed %s", buffer);
+			}
+		}
+	}
 
 	return changed;
 }
@@ -387,7 +400,6 @@ void AddMap(int client, char[] mapname) {
 		return;
 	}
 	
-	char buffer[32];
 	if (!IsMapOnServer(mapname)) {
 		ReplyToCommand(client, "Map not on server. Add to map dir and fastdl before using this cmd");
 		return;
@@ -398,12 +410,7 @@ void AddMap(int client, char[] mapname) {
 
 	ReplyToCommand(client, "%s added to mapcycle", mapname);
 
-	char date[32];
-	FormatTime(date, 100, "%Y_%m_%d");
-	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
-	File log = OpenFile(g_sPath_Log, "a");
-	log.WriteLine("%N ADDED %s", client, buffer);
-	delete log;
+	WriteToLog("%N ADDED %s", client, mapname);
 }
 
 void RemoveMap(int client, char[] mapname) {
@@ -418,12 +425,7 @@ void RemoveMap(int client, char[] mapname) {
 
 	ReplyToCommand(client, "%s removed from mapcycle", mapname);
 
-	char date[32];
-	FormatTime(date, 100, "%Y_%m_%d");
-	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
-	File log = OpenFile(g_sPath_Log, "a");
-	log.WriteLine("%N REMOVED %s", client, mapname);
-	delete log;
+	WriteToLog("%N REMOVED %s", client, mapname);
 }
 
 void DeleteMap(int client, char[] mapname) {
@@ -444,12 +446,7 @@ void DeleteMap(int client, char[] mapname) {
 	}
 
 	ReplyToCommand(client, "Deleted %s.bsp", mapname);
-	char date[32];
-	FormatTime(date, 100, "%Y_%m_%d");
-	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
-	File log = OpenFile(g_sPath_Log, "a");
-	log.WriteLine("%N DELETED %s", client, mapname);
-	delete log;
+	WriteToLog("%N DELETED %s", client, mapname);
 }
 
 int GetFileExtension(char[] filename, int size, char[] extension, int size2) {
@@ -475,4 +472,16 @@ bool IsMapOnServer(char[] mapname) {
 
 bool IsMapInCycle(char[] mapname, int &index = -1) {
 	return (index = g_aMapList.FindString(mapname)) != -1;
+}
+
+void WriteToLog(char[] message, any ...) {
+	char output[1024];
+	VFormat(output, sizeof(output), message, 2);
+
+	char date[32];
+	FormatTime(date, 100, "%Y_%m_%d");
+	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
+	File log = OpenFile(g_sPath_Log, "a");
+	log.WriteLine(output);
+	delete log;
 }
