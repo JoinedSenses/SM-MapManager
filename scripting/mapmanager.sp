@@ -10,7 +10,7 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#define PLUGIN_VERSION "0.0.1"
+#define PLUGIN_VERSION "0.0.2"
 #define PLUGIN_DESCRIPTION "An interface for managing mapcycle.txt and adminmenu_maplist.ini"
 
 #define MAPFOLDER "custom/my_custom_folder/maps"
@@ -349,10 +349,10 @@ bool CheckMapCycle(bool mapend = false) {
 			changed = true;
 
 			if (mapend) {
-				WriteToLog("Server added %s", buffer);
+				WriteToLog("%s ADDED by Server", buffer);
 			}
 			else if (!IsMapOnServer(buffer)) {
-				LogError("%s in mapcycle, but not on server", buffer);
+				WriteToLog("%s in mapcycle, but not on server", buffer);
 			}
 		}
 		g_aTemp.PushString(buffer);
@@ -362,15 +362,17 @@ bool CheckMapCycle(bool mapend = false) {
 	// Check if any maps were removed.
 	for (int i = 0; i < g_aMapList.Length; i++) {
 		g_aMapList.GetString(i, buffer, sizeof(buffer));
-		if (!g_aTemp.FindString(buffer)) {
+		if (g_aTemp.FindString(buffer) == -1) {
 			g_aMapList.Erase(i);
 			changed = true;
 
 			if (mapend) {
-				WriteToLog("Server removed %s", buffer);
+				WriteToLog("%s REMOVED by Server", buffer);
 			}
 		}
 	}
+
+	g_aTemp.Clear();
 
 	return changed;
 }
@@ -410,7 +412,7 @@ void AddMap(int client, char[] mapname) {
 
 	ReplyToCommand(client, "%s added to mapcycle", mapname);
 
-	WriteToLog("%N ADDED %s", client, mapname);
+	WriteToLog("%s ADDED by %N", mapname, client);
 }
 
 void RemoveMap(int client, char[] mapname) {
@@ -425,7 +427,7 @@ void RemoveMap(int client, char[] mapname) {
 
 	ReplyToCommand(client, "%s removed from mapcycle", mapname);
 
-	WriteToLog("%N REMOVED %s", client, mapname);
+	WriteToLog("%s REMOVED by %N", mapname, client);
 }
 
 void DeleteMap(int client, char[] mapname) {
