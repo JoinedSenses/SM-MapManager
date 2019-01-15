@@ -13,6 +13,9 @@ This plugin works better if you use a custom directory instead of default gamefo
 
 Considering adding features to support checking against fastdl and the ability to interact with it in some manner  
 
+Implements Discord API. If enabled, logged information can be relayed to a discord channel.  
+https://forums.alliedmods.net/showthread.php?t=292663
+
 ## Commands  
 `sm_addmap <mapname>` - Adds a map to mapcycle (Map must exist in map folder) \[ADMINFLAG_RCON]  
 `sm_removemap <mapname>` - Remmoves map from mapcycle \[ADMINFLAG_RCON]  
