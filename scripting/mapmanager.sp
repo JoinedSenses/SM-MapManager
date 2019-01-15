@@ -10,10 +10,16 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#define PLUGIN_VERSION "0.0.2"
+#undef REQUIRE_PLUGIN
+#include <discord>
+#define REQUIRE_PLUGIN
+#define PLUGIN_VERSION "0.0.3"
 #define PLUGIN_DESCRIPTION "An interface for managing mapcycle.txt and adminmenu_maplist.ini"
 
 #define MAPFOLDER "custom/my_custom_folder/maps"
+#define IRCCHANNEL "ecj-maps"
+
+ConVar g_cvarDiscordChannel;
 
 ArrayList g_aMapList;
 ArrayList g_aTemp;
@@ -21,6 +27,8 @@ ArrayList g_aTemp;
 char g_sPath_Log[PLATFORM_MAX_PATH];
 char g_sPath_AMmaplist[PLATFORM_MAX_PATH];
 char g_sPath_Custom[PLATFORM_MAX_PATH];
+
+bool g_bDiscord;
 
 public Plugin myinfo = {
 	name = "Map Manager",
@@ -34,6 +42,9 @@ public Plugin myinfo = {
 
 public void OnPluginStart() {
 	CreateConVar("sm_mapmanager_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
+	g_cvarDiscordChannel = CreateConVar("sm_mapmanager_discord", "", "Discord channel to use if integrating SM Discord API", FCVAR_NONE);
+
+	AutoExecConfig();
 
 	RegAdminCmd("sm_addmap", cmdAddMap, ADMFLAG_RCON);
 	RegAdminCmd("sm_removemap", cmdRemoveMap, ADMFLAG_RCON);
@@ -54,6 +65,10 @@ public void OnPluginStart() {
 	if (CheckMapCycle()) {
 		UpdateMapFiles();		
 	}
+}
+
+public void OnAllPluginsLoaded() {
+	g_bDiscord = LibraryExists("discord");
 }
 
 public void OnMapEnd() {
@@ -483,7 +498,24 @@ void WriteToLog(char[] message, any ...) {
 	char date[32];
 	FormatTime(date, 100, "%Y_%m_%d");
 	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/%s.log", date);
+
 	File log = OpenFile(g_sPath_Log, "a");
 	log.WriteLine(output);
 	delete log;
+
+	if (g_bDiscord) {
+		char hostname[32];
+		FindConVar("hostname").GetString(hostname, sizeof(hostname));
+
+		// This is specific to my servers. If using this plugin, edit if need.
+		int index = FindCharInString(hostname, '[');
+		Format(output, sizeof(output), "%s | %s", hostname[index-1], output);
+
+		char channel[32];
+		g_cvarDiscordChannel.GetString(channel, sizeof(channel));
+		
+		if (channel[0] != '\0') {
+			Discord_SendMessage(channel, output);
+		}
+	}
 }
