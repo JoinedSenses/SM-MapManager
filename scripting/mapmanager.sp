@@ -13,11 +13,10 @@
 #undef REQUIRE_PLUGIN
 #include <discord>
 #define REQUIRE_PLUGIN
-#define PLUGIN_VERSION "0.0.3"
+#define PLUGIN_VERSION "0.0.4"
 #define PLUGIN_DESCRIPTION "An interface for managing mapcycle.txt and adminmenu_maplist.ini"
 
 #define MAPFOLDER "custom/my_custom_folder/maps"
-#define IRCCHANNEL "ecj-maps"
 
 ConVar g_cvarDiscordChannel;
 
@@ -181,6 +180,7 @@ void DisplayAddMenu(int client) {
 		if (filetype != FileType_File) {
 			continue;
 		}
+
 		int index = GetFileExtension(buffer, sizeof(buffer), extension, sizeof(extension));
 		if (StrEqual(extension, "bsp", false)) {
 			Format(buffer, index, buffer);
@@ -468,11 +468,13 @@ void DeleteMap(int client, char[] mapname) {
 
 int GetFileExtension(char[] filename, int size, char[] extension, int size2) {
 	int index;
-	for (int i = 0; i < size && filename[i] != '\0'; i++) {
+	for (int i = size - 1; i > 0 && filename[i] != '\0'; i--) {
 		if (filename[i] == '.') {
 			index = i;
+			break;
 		}
 	}
+
 	if (!index) {
 		return -1;
 	}
