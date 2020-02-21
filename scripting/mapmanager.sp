@@ -13,10 +13,11 @@
 #undef REQUIRE_PLUGIN
 #include <discord>
 #define REQUIRE_PLUGIN
-#define PLUGIN_VERSION "0.0.4"
+#define PLUGIN_VERSION "0.0.5"
 #define PLUGIN_DESCRIPTION "An interface for managing mapcycle.txt and adminmenu_maplist.ini"
 
 #define MAPFOLDER "custom/my_custom_folder/maps"
+#define MAX_MAP_LEN 80
 
 ConVar g_cvarDiscordChannel;
 
@@ -40,7 +41,7 @@ public Plugin myinfo = {
 // ----------------- SM API
 
 public void OnPluginStart() {
-	CreateConVar("sm_mapmanager_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
+	CreateConVar("sm_mapmanager_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
 	g_cvarDiscordChannel = CreateConVar("sm_mapmanager_discord", "", "Discord channel to use if integrating SM Discord API", FCVAR_NONE);
 
 	AutoExecConfig();
@@ -50,8 +51,10 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_deletemap", cmdDeleteMap, ADMFLAG_ROOT);
 	RegAdminCmd("sm_mapmanager", cmdMapManager, ADMFLAG_RCON);
 
-	g_aMapList = new ArrayList(ByteCountToCells(80));
-	g_aTemp = new ArrayList(ByteCountToCells(80));
+	RegAdminCmd("sm_testmaps", cmdTest, ADMFLAG_ROOT);
+
+	g_aMapList = new ArrayList(ByteCountToCells(MAX_MAP_LEN));
+	g_aTemp = new ArrayList(ByteCountToCells(MAX_MAP_LEN));
 
 	BuildPath(Path_SM, g_sPath_AMmaplist, sizeof(g_sPath_AMmaplist), "/configs/adminmenu_maplist.ini");
 	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/");
@@ -62,8 +65,19 @@ public void OnPluginStart() {
 	}
 
 	if (CheckMapCycle()) {
-		UpdateMapFiles();		
+		UpdateMapFiles();
 	}
+}
+
+public Action cmdTest(int client, int args) {
+	DirectoryListing dir = OpenDirectory(g_sPath_Custom);
+	FileType filetype;
+	char buffer[64];
+	while (dir.GetNext(buffer, sizeof(buffer), filetype)) {
+		PrintToChatAll("%s", buffer);
+	}
+
+	delete dir;
 }
 
 public void OnAllPluginsLoaded() {
@@ -171,7 +185,7 @@ void DisplayAddMenu(int client) {
 	menu.ExitBackButton = true;
 
 	DirectoryListing mapfolder = OpenDirectory(g_sPath_Custom);
-	char buffer[80];
+	char buffer[MAX_MAP_LEN];
 	
 	FileType filetype;
 	char extension[16];
@@ -181,7 +195,7 @@ void DisplayAddMenu(int client) {
 			continue;
 		}
 
-		int index = GetFileExtension(buffer, sizeof(buffer), extension, sizeof(extension));
+		int index = GetFileExtension(buffer, strlen(buffer), extension, sizeof(extension));
 		if (StrEqual(extension, "bsp", false)) {
 			Format(buffer, index, buffer);
 
@@ -198,7 +212,7 @@ void DisplayAddMenu(int client) {
 int menuHandler_AddMap(Menu menu, MenuAction action, int param1, int param2) {
 	switch (action) {
 		case MenuAction_Select: {
-			char mapname[80];
+			char mapname[MAX_MAP_LEN];
 			menu.GetItem(param2, mapname, sizeof(mapname));
 			menu.RemoveItem(param2);
 			menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
@@ -223,7 +237,7 @@ void DisplayRemoveMenu(int client) {
 	menu.SetTitle("Remove Map");
 	menu.ExitBackButton = true;
 
-	char buffer[80];
+	char buffer[MAX_MAP_LEN];
 	for (int i = 0; i < g_aMapList.Length; i++) {
 		g_aMapList.GetString(i, buffer, sizeof(buffer));
 		menu.AddItem(buffer, buffer);
@@ -235,7 +249,7 @@ void DisplayRemoveMenu(int client) {
 int menuHandler_RemoveMap(Menu menu, MenuAction action, int param1, int param2) {
 	switch (action) {
 		case MenuAction_Select: {
-			char mapname[80];
+			char mapname[MAX_MAP_LEN];
 			menu.GetItem(param2, mapname, sizeof(mapname));
 			menu.RemoveItem(param2);
 			menu.DisplayAt(param1, menu.Selection, MENU_TIME_FOREVER);
@@ -248,7 +262,7 @@ int menuHandler_RemoveMap(Menu menu, MenuAction action, int param1, int param2) 
 			}
 		}
 		case MenuAction_DisplayItem: {
-			char mapname[96];
+			char mapname[MAX_MAP_LEN + 16];
 			menu.GetItem(param2, mapname, sizeof(mapname));
 			if (!IsMapOnServer(mapname)) {
 				Format(mapname, sizeof(mapname), "%s (Not Found)", mapname);
@@ -270,7 +284,7 @@ void DisplayDeleteMenu(int client) {
 	menu.ExitBackButton = true;
 
 	DirectoryListing mapfolder = OpenDirectory(g_sPath_Custom);
-	char buffer[80];
+	char buffer[MAX_MAP_LEN];
 	
 	FileType filetype;
 	char extension[16];
@@ -280,7 +294,8 @@ void DisplayDeleteMenu(int client) {
 			continue;
 		}
 
-		int index = GetFileExtension(buffer, sizeof(buffer), extension, sizeof(extension));
+		int index = GetFileExtension(buffer, strlen(buffer), extension, sizeof(extension));
+		PrintToChatAll("Name: %s Ext: %s", buffer, extension);
 		if (StrEqual(extension, "bsp", false)) {
 			Format(buffer, index, buffer);
 
@@ -295,7 +310,7 @@ void DisplayDeleteMenu(int client) {
 int menuHandler_DeleteMap(Menu menu, MenuAction action, int param1, int param2) {
 	switch (action) {
 		case MenuAction_Select: {
-			char mapname[80];
+			char mapname[MAX_MAP_LEN];
 			menu.GetItem(param2, mapname, sizeof(mapname));
 
 			DisplayConfirmationPanel(param1, mapname);
@@ -306,7 +321,7 @@ int menuHandler_DeleteMap(Menu menu, MenuAction action, int param1, int param2) 
 			}
 		}
 		case MenuAction_DisplayItem: {
-			char mapname[80];
+			char mapname[MAX_MAP_LEN];
 			menu.GetItem(param2, mapname, sizeof(mapname));
 
 			if (IsMapInCycle(mapname)) {
@@ -322,7 +337,7 @@ int menuHandler_DeleteMap(Menu menu, MenuAction action, int param1, int param2) 
 }
 
 void DisplayConfirmationPanel(int client, char[] mapname) {
-	char title[80];
+	char title[MAX_MAP_LEN];
 	Format(title, sizeof(title), "%s\nDelete Map?", mapname);
 
 	Menu menu = new Menu(menuHandler_DeleteConfirmation, MENU_ACTIONS_DEFAULT);
@@ -353,7 +368,7 @@ int menuHandler_DeleteConfirmation(Menu menu, MenuAction action, int param1, int
 bool CheckMapCycle(bool mapend = false) {
 	File file = OpenFile("cfg/mapcycle.txt", "r");
 
-	char buffer[80];
+	char buffer[MAX_MAP_LEN];
 	bool changed;
 
 	// Check is any maps were added.
@@ -395,7 +410,7 @@ bool CheckMapCycle(bool mapend = false) {
 void UpdateMapFiles() {
 		SortADTArray(g_aMapList, Sort_Ascending, Sort_String);
 
-		char buffer[80];
+		char buffer[MAX_MAP_LEN];
 		File file = OpenFile("cfg/mapcycle.txt", "w");
 		for (int i = 0; i < g_aMapList.Length; i++) {
 			g_aMapList.GetString(i, buffer, sizeof(buffer));
@@ -468,7 +483,7 @@ void DeleteMap(int client, char[] mapname) {
 
 int GetFileExtension(char[] filename, int size, char[] extension, int size2) {
 	int index;
-	for (int i = size - 1; i > 0 && filename[i] != '\0'; i--) {
+	for (int i = size - 1; i > 0; i--) {
 		if (filename[i] == '.') {
 			index = i;
 			break;
