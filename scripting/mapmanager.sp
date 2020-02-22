@@ -51,14 +51,12 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_deletemap", cmdDeleteMap, ADMFLAG_ROOT);
 	RegAdminCmd("sm_mapmanager", cmdMapManager, ADMFLAG_RCON);
 
-	RegAdminCmd("sm_testmaps", cmdTest, ADMFLAG_ROOT);
-
 	g_aMapList = new ArrayList(ByteCountToCells(MAX_MAP_LEN));
 	g_aTemp = new ArrayList(ByteCountToCells(MAX_MAP_LEN));
 
 	BuildPath(Path_SM, g_sPath_AMmaplist, sizeof(g_sPath_AMmaplist), "/configs/adminmenu_maplist.ini");
 	BuildPath(Path_SM, g_sPath_Log, sizeof(g_sPath_Log), "/logs/mapmanager/");
-	Format(g_sPath_Custom, sizeof(g_sPath_Custom), MAPFOLDER);
+	strcopy(g_sPath_Custom, sizeof(g_sPath_Custom), MAPFOLDER);
 
 	if (!DirExists(g_sPath_Log)) {
 		CreateDirectory(g_sPath_Log, 511);
@@ -67,17 +65,6 @@ public void OnPluginStart() {
 	if (CheckMapCycle()) {
 		UpdateMapFiles();
 	}
-}
-
-public Action cmdTest(int client, int args) {
-	DirectoryListing dir = OpenDirectory(g_sPath_Custom);
-	FileType filetype;
-	char buffer[64];
-	while (dir.GetNext(buffer, sizeof(buffer), filetype)) {
-		PrintToChatAll("%s", buffer);
-	}
-
-	delete dir;
 }
 
 public void OnAllPluginsLoaded() {
@@ -295,7 +282,6 @@ void DisplayDeleteMenu(int client) {
 		}
 
 		int index = GetFileExtension(buffer, strlen(buffer), extension, sizeof(extension));
-		PrintToChatAll("Name: %s Ext: %s", buffer, extension);
 		if (StrEqual(extension, "bsp", false)) {
 			Format(buffer, index, buffer);
 
@@ -373,7 +359,7 @@ bool CheckMapCycle(bool mapend = false) {
 
 	// Check is any maps were added.
 	while (!file.EndOfFile() && file.ReadLine(buffer, sizeof(buffer))) {
-		ReplaceString(buffer, sizeof(buffer), "\n", "", false);
+		TrimString(buffer);
 		if (!IsMapInCycle(buffer)) {
 			g_aMapList.PushString(buffer);
 			changed = true;
@@ -481,9 +467,9 @@ void DeleteMap(int client, char[] mapname) {
 	WriteToLog("%N DELETED %s", client, mapname);
 }
 
-int GetFileExtension(char[] filename, int size, char[] extension, int size2) {
+int GetFileExtension(char[] filename, int len, char[] extension, int size) {
 	int index;
-	for (int i = size - 1; i > 0; i--) {
+	for (int i = len - 1; i > 0; i--) {
 		if (filename[i] == '.') {
 			index = i;
 			break;
@@ -494,7 +480,7 @@ int GetFileExtension(char[] filename, int size, char[] extension, int size2) {
 		return -1;
 	}
 
-	Format(extension, size2, "%s", filename[index+1]);
+	strcopy(extension, size, filename[index+1]);
 	return index+1;
 }
 
