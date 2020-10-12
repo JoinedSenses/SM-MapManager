@@ -9,11 +9,13 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+#define CUSTOM 1
+
 #include <sourcemod>
 #undef REQUIRE_PLUGIN
 #include <discord>
 #define REQUIRE_PLUGIN
-#define PLUGIN_VERSION "0.0.5"
+#define PLUGIN_VERSION "0.0.6"
 #define PLUGIN_DESCRIPTION "An interface for managing mapcycle.txt and adminmenu_maplist.ini"
 
 #define MAPFOLDER "custom/my_custom_folder/maps"
@@ -191,6 +193,7 @@ void DisplayAddMenu(int client) {
 			}
 		}
 	}
+
 	delete mapfolder;
 
 	menu.Display(client, MENU_TIME_FOREVER);
@@ -507,12 +510,33 @@ void WriteToLog(char[] message, any ...) {
 	delete log;
 
 	if (g_bDiscord) {
-		char hostname[32];
+		char hostname[64];
 		FindConVar("hostname").GetString(hostname, sizeof(hostname));
 
+#if CUSTOM
 		// This is specific to my servers. If using this plugin, edit if need.
-		int index = FindCharInString(hostname, '[');
-		Format(output, sizeof(output), "%s | %s", hostname[index-1], output);
+		int index1 = FindCharInString(hostname, '[');
+		int index2;
+		if (index1 != -1) {
+			index2 = FindCharInString(hostname, '[', true);
+			if (index2 == index1) {
+				index2 = strlen(hostname) - 1;
+			}
+		}
+		else {
+			index1 = 0;
+			index2 = strlen(hostname) - 1;
+		}
+
+		char buffer[64];
+		strcopy(buffer, index2 - index1 + 1, hostname[index1]);
+
+		TrimString(buffer);
+
+		Format(output, sizeof(output), "%s | %s", buffer, output);
+#else
+		Format(output, sizeof(output), "%s | %s", hostname, output);
+#endif
 
 		char channel[32];
 		g_cvarDiscordChannel.GetString(channel, sizeof(channel));
