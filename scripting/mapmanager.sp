@@ -15,7 +15,7 @@
 #undef REQUIRE_PLUGIN
 #include <discord>
 #define REQUIRE_PLUGIN
-#define PLUGIN_VERSION "0.0.6"
+#define PLUGIN_VERSION "0.0.7"
 #define PLUGIN_DESCRIPTION "An interface for managing mapcycle.txt and adminmenu_maplist.ini"
 
 #define MAPFOLDER "custom/my_custom_folder/maps"
@@ -368,7 +368,7 @@ bool CheckMapCycle(bool mapend = false) {
 			changed = true;
 
 			if (mapend) {
-				WriteToLog("%s ADDED by Server", buffer);
+				WriteToLog("ADDED `%s` by Server", buffer);
 			}
 			else if (!IsMapOnServer(buffer)) {
 				WriteToLog("%s in mapcycle, but not on server", buffer);
@@ -386,7 +386,7 @@ bool CheckMapCycle(bool mapend = false) {
 			changed = true;
 
 			if (mapend) {
-				WriteToLog("%s REMOVED by Server", buffer);
+				WriteToLog("REMOVED `%s` by Server", buffer);
 			}
 		}
 	}
@@ -431,7 +431,7 @@ void AddMap(int client, char[] mapname) {
 
 	ReplyToCommand(client, "%s added to mapcycle", mapname);
 
-	WriteToLog("%s ADDED by %N", mapname, client);
+	WriteToLog("ADDED `%s` by %N", mapname, client);
 }
 
 void RemoveMap(int client, char[] mapname) {
@@ -446,7 +446,7 @@ void RemoveMap(int client, char[] mapname) {
 
 	ReplyToCommand(client, "%s removed from mapcycle", mapname);
 
-	WriteToLog("%s REMOVED by %N", mapname, client);
+	WriteToLog("REMOVED `%s` by %N", mapname, client);
 }
 
 void DeleteMap(int client, char[] mapname) {
@@ -467,7 +467,7 @@ void DeleteMap(int client, char[] mapname) {
 	}
 
 	ReplyToCommand(client, "Deleted %s.bsp", mapname);
-	WriteToLog("%N DELETED %s", client, mapname);
+	WriteToLog("DELETED `%s` by %N", mapname, client);
 }
 
 int GetFileExtension(char[] filename, int len, char[] extension, int size) {
