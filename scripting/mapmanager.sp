@@ -15,10 +15,10 @@
 #undef REQUIRE_PLUGIN
 #include <discord>
 #define REQUIRE_PLUGIN
-#define PLUGIN_VERSION "0.0.7"
+#define PLUGIN_VERSION "0.1.0"
 #define PLUGIN_DESCRIPTION "An interface for managing mapcycle.txt and adminmenu_maplist.ini"
 
-#define MAPFOLDER "custom/my_custom_folder/maps"
+#define MAPFOLDER "custom/my_custom_folder/maps/"
 #define MAX_MAP_LEN 80
 
 ConVar g_cvarDiscordChannel;
@@ -162,6 +162,8 @@ int menuHandler_Main(Menu menu, MenuAction action, int param1, int param2) {
 			delete menu;
 		}
 	}
+
+	return 0;
 }
 
 void DisplayAddMenu(int client) {
@@ -179,6 +181,8 @@ void DisplayAddMenu(int client) {
 	FileType filetype;
 	char extension[16];
 
+	ArrayList list = new ArrayList(MAX_MAP_LEN);
+
 	while (mapfolder.GetNext(buffer, sizeof(buffer), filetype)) {
 		if (filetype != FileType_File) {
 			continue;
@@ -189,12 +193,23 @@ void DisplayAddMenu(int client) {
 			Format(buffer, index, buffer);
 
 			if (!IsMapInCycle(buffer)) {
-				menu.AddItem(buffer, buffer);
+				list.PushString(buffer);
 			}
 		}
 	}
 
 	delete mapfolder;
+
+	SortADTArray(list, Sort_Ascending, Sort_String);
+
+	int count = list.Length;
+	for (int i = 0; i < count; ++i) {
+		list.GetString(i, buffer, sizeof(buffer));
+
+		menu.AddItem(buffer, buffer);
+	}
+
+	delete list;
 
 	menu.Display(client, MENU_TIME_FOREVER);
 }
@@ -220,6 +235,8 @@ int menuHandler_AddMap(Menu menu, MenuAction action, int param1, int param2) {
 			}
 		}
 	}
+
+	return 0;
 }
 
 void DisplayRemoveMenu(int client) {
@@ -350,6 +367,8 @@ int menuHandler_DeleteConfirmation(Menu menu, MenuAction action, int param1, int
 			delete menu;
 		}
 	}
+
+	return 0;
 }
 
 // ----------------- Internal Functions/Stocks
@@ -488,9 +507,11 @@ int GetFileExtension(char[] filename, int len, char[] extension, int size) {
 }
 
 bool IsMapOnServer(char[] mapname) {
-	char filepath[PLATFORM_MAX_PATH];
-	Format(filepath, sizeof(filepath), "%s/%s.bsp", MAPFOLDER, mapname);
-	return FileExists(filepath, true, "GAME");
+	char name[80];
+
+	return
+		FindMap(mapname, name, sizeof(name)) == FindMap_Found
+		|| StrEqual(mapname, name, false);
 }
 
 bool IsMapInCycle(char[] mapname, int &index = -1) {
